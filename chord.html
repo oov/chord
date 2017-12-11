@@ -15,16 +15,16 @@
 
   /* コード組み立てフォーム ------------------- */
 
-.chord-builder-key.has-error,
-.chord-builder-basic1.has-error,
-.chord-builder-basic2.has-error,
-.chord-builder-basic3.has-error,
-.chord-builder-basic4.has-error,
-.chord-builder-tension1.has-error,
-.chord-builder-tension2.has-error,
-.chord-builder-tension3.has-error,
-.chord-builder-omit.has-error,
-.chord-builder-bass.has-error {
+.cb-key.has-error,
+.cb-basic1.has-error,
+.cb-basic2.has-error,
+.cb-basic3.has-error,
+.cb-basic4.has-error,
+.cb-tension1.has-error,
+.cb-tension2.has-error,
+.cb-tension3.has-error,
+.cb-omit.has-error,
+.cb-bass.has-error {
   background-color: #fdd;
 }
 
@@ -87,20 +87,20 @@
   </thead>
   <tbody>
     <tr>
-      <td class="chord-builder-key"></td>
-      <td class="chord-builder-basic1"></td>
-      <td class="chord-builder-basic2"></td>
-      <td class="chord-builder-basic3"></td>
-      <td class="chord-builder-basic4"></td>
-      <td class="chord-builder-tension1"></td>
-      <td class="chord-builder-tension2"></td>
-      <td class="chord-builder-tension3"></td>
-      <td class="chord-builder-omit"></td>
-      <td class="chord-builder-bass"></td>
+      <td class="cb-key"></td>
+      <td class="cb-basic1"></td>
+      <td class="cb-basic2"></td>
+      <td class="cb-basic3"></td>
+      <td class="cb-basic4"></td>
+      <td class="cb-tension1"></td>
+      <td class="cb-tension2"></td>
+      <td class="cb-tension3"></td>
+      <td class="cb-omit"></td>
+      <td class="cb-bass"></td>
     </tr>
   </tbody>  
 </table>
-<ul class="chord-builder-error-messages"></ul>
+<ul class="cb-error-messages"></ul>
 </form>
 <script src="keyboard.js"></script>
 <script>
@@ -347,17 +347,17 @@
 
   // コード組み立て用フォームを準備し、それを操作するためのインスタンスを返す
   // frm には form タグのエレメントを渡す必要があり、そのタグの中には以下のクラス名を持つタグが必要
-  // .chord-builder-key
-  // .chord-builder-basic1
-  // .chord-builder-basic2
-  // .chord-builder-basic3
-  // .chord-builder-basic4
-  // .chord-builder-tension1
-  // .chord-builder-tension2
-  // .chord-builder-tension3
-  // .chord-builder-omit
-  // .chord-builder-bass
-  // .chord-builder-error-messages
+  // .cb-key
+  // .cb-basic1
+  // .cb-basic2
+  // .cb-basic3
+  // .cb-basic4
+  // .cb-tension1
+  // .cb-tension2
+  // .cb-tension3
+  // .cb-omit
+  // .cb-bass
+  // .cb-error-messages
 function initChordBuilder(frm) {
     // ラジオボタンに入れる項目
     var items = {
@@ -379,9 +379,9 @@ function initChordBuilder(frm) {
     for (var i = 0; i < keys.length; ++i) {
       var key = keys[i];
       var item = items[key];
-      var elem = frm.querySelector('.chord-builder-' + key);
+      var elem = frm.querySelector('.cb-' + key);
       if (!elem) {
-        throw new Error('エレメント ".chord-builder-' + key + '" が見つかりません');
+        throw new Error('エレメント ".cb-' + key + '" が見つかりません');
       }
       elems[key] = elem;
       elem.innerHTML = "";
@@ -400,7 +400,7 @@ function initChordBuilder(frm) {
       }
     }
     return {
-      err: frm.querySelector('.chord-builder-error-messages'),
+      err: frm.querySelector('.cb-error-messages'),
       elems: elems,
       items: items,
       form: frm
