@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ja">
+<meta charset="utf-8">
+<title>コードをJavascriptで翻訳するやつ</title>
+<style>
+  th {
+    background-color: #eee;
+  }
+  td {
+    vertical-align: top;
+  }
+  td label {
+    display: block;
+  }
+
+  /* コード組み立てフォーム ------------------- */
+
+.chord-builder-key.has-error,
+.chord-builder-basic1.has-error,
+.chord-builder-basic2.has-error,
+.chord-builder-basic3.has-error,
+.chord-builder-basic4.has-error,
+.chord-builder-tension1.has-error,
+.chord-builder-tension2.has-error,
+.chord-builder-tension3.has-error,
+.chord-builder-omit.has-error,
+.chord-builder-bass.has-error {
+  background-color: #fdd;
+}
+
+  /* キーボード ------------------------------ */
+
+  .keyboard{
+    height: 64px;
+    position: relative;
+    width: 500px;
+  }
+  .white{
+    box-sizing: border-box;
+    border: 1px solid;
+    border-color: #eee #aaa #aaa #eee;
+    height: 100%;
+    top: 0;
+    position: absolute;
+  }
+  .black{
+    box-sizing: border-box;
+    border: 1px solid;
+    border-color: #999 #111 #111 #999;
+    background: #333;
+    position: absolute;
+    height: 60%;
+    top: 0;
+  }
+  .white.active{
+    background-color: #f99;
+    border-color: #fcc #c99 #c99 #fcc;
+  }
+  .black.active{
+    background-color: #c33;
+    border-color: #f99 #633 #633 #f99;
+  }
+</style>
+
+<div class="keyboard">
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+    <div class="white"></div>
+
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+    <div class="black"></div>
+</div>
+
+<p>
+  <input type="text" onchange="showResult(detectChordName(this.value))"><span id="result">(_,_,_,_,_,_,_,_)</span>
+</p>
+<p>
+  テキストボックス内に、下記対応表記に準じたコードネームを書いて、エンターキーを押してください。<br>
+  括弧内に、13thコードを基準にした、ベース、1度、3度、5度、7度、9度、11度、13度の動きが反映されます。<br>
+  下の入力欄を操作してコードを組み立てることも出来ます。
+</p>
+
+<form name="builder">
+<table>
+  <thead>
+    <tr>
+      <th>キー</th>
+      <th colspan="4">基本</th>
+      <th colspan="3">テンション</th>
+      <th>省略</th>
+      <th>ベース</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="chord-builder-key"></td>
+      <td class="chord-builder-basic1"></td>
+      <td class="chord-builder-basic2"></td>
+      <td class="chord-builder-basic3"></td>
+      <td class="chord-builder-basic4"></td>
+      <td class="chord-builder-tension1"></td>
+      <td class="chord-builder-tension2"></td>
+      <td class="chord-builder-tension3"></td>
+      <td class="chord-builder-omit"></td>
+      <td class="chord-builder-bass"></td>
+    </tr>
+  </tbody>  
+</table>
+<ul class="chord-builder-error-messages"></ul>
+</form>
+<script>
+  // フォームのラジオボタンを触ったらコード組み立てるヤツ -------------
+
+  var chordBuilder = initChordBuilder(document.querySelector('form[name=builder]'));
+  var lastChordBuilderValues = JSON.stringify(getValuesChordBuilder(chordBuilder));
+
+  setInterval(function(){
+    var values = getValuesChordBuilder(chordBuilder);
+    var valuesStr = JSON.stringify(values);
+    if (lastChordBuilderValues != valuesStr) { // 選択項目が変更されていたら
+      lastChordBuilderValues = valuesStr;
+
+      // 入力された内容がコードとして問題ないかチェック
+      var errors = validateChord(values);
+      setErrorMessageChordBuilder(chordBuilder, errors);
+      if (errors.length) { // ダメだった
+        return null;
+      }
+
+      var chord = buildChord(chordBuilder, values); // コードを組み立て
+      document.querySelector('input[type=text]').value = chord;
+      showResult(detectChordName(chord));
+    }
+  }, 100);
+
+  // キーボードの準備
+  var keys = initKeyboard(document.querySelector('.keyboard'));
+
+  function hasSharp(str) {
+    return str.substring(1, 2) == '#'; // 2文字目が # か？
+  }
+
+  // 渡された文字が '#' なら 1、'b' なら -1、それ以外なら 0 を返す
+  function sharpFlatToInt(c) {
+    switch (c) {
+      case '#': return 1;
+      case 'b': return -1;
+    }
+    return 0;
+  }
+
+  function keyToKeyIndex(key) {
+    return ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].indexOf(key);
+  }
+
+  function detectPhase1(chord, value) {
+    var m;
+    // M / m / aug / dim を判定
+    if (m = value.match(/^m(?!aj)|aug|dim/)) {
+      chord.tri = m[0];
+      switch (m[0]) {
+        case 'm':
+          chord.diff[2] = chord.diff[2] - 1;
+          break;
+        case 'aug':
+          chord.diff[3] = chord.diff[3] + 1;
+          break;
+        case 'dim':
+          chord.diff[2] = chord.diff[2] - 1;
+          chord.diff[3] = chord.diff[3] - 1
+          break;
+      }
+      value = value.substring(m[0].length); // 用済みの部分を削る
+    } else {
+      chord.tri = 'M';
+      if (m = value.match(/^(maj|Maj|M)/)) {
+        chord.foundMaj = true;
+        value = value.substring(m[0].length); // 用済みの部分を削る
+      }
+    }
+
+    if (chord.tri == 'M' || chord.tri == 'm') {
+      if (m = value.match(/^add[249]/)) {
+        switch (m[0]) {
+          
+        }
+        chord.diff[5] = -12
+        value = value.substring(m[0].length);
+      }
+      if (m = value.match(/^add4/)) {
+        chord.diff[6] = -12
+        value = value.substring(m[0].length);
+      }
+    }
+    return value;
+  }
+
+  function detectPhase2(chord, value) {
+    var m;
+    if (m = value.match(/^(7|9|11|13)/)) {
+      if (chord.tri == 'dim') {
+        chord.diff[4] = -1;
+      } else {
+        chord.diff[4] = 0;
+      }
+      var n = parseInt(m[2], 10);
+      if (n >= 9) {
+        chord.diff[5] = 0;
+      }
+      if (n >= 11) {
+        chord.diff[6] = 0;
+      }
+      if (n >= 13) {
+        chord.diff[7] = 0;
+      }
+      value = value.substring(m[0].length);
+    }
+
+    if (m = value.match(/^6/)) {
+      chord.diff[4] = -1;
+      value = value.substring(m[0].length);
+    }
+
+    if (chord.tri == 'M' && chord.foundMaj && chord.diff[4] !== null) {
+      chord.diff[4] = chord.diff[4] + 1;
+    }
+    return value;
+  }
+
+  function detectPhase3(chord, value) {
+    var m;
+    if (m = value.match(/^sus4/)) {
+      chord.diff[2] = chord.diff[2] + 1
+      value = value.substring(m[0].length);
+    }
+    if (m = value.match(/^-5/)) {
+      chord.diff[3] = chord.diff[3] - 1
+      value = value.substring(m[0].length);
+    }
+    return value;
+  }
+
+  function detectPhase4(chord, value) {
+    var m = value.match(/\([^)]+\)/);
+    if (!m) {
+      // カッコが見つからなければなにもしない
+      return value;
+    }
+    // value からカッコを削っておく
+    value = a.substring(0, m.index) + a.substring(m.index + m[0].length);
+
+    var tension = m[0];
+    tension = tension.substring(1); // '(' を削る
+    tension = tension.replace(/[ ,]/g, ''); // スペースと , を削る
+    if (m = tension.match(/^[b#]?9/)) {
+      chord.diff[5] = sharpFlatToInt(m[0].charAt(0));
+      tension = tension.substring(m[0].length);
+    }
+    if (m = tension.match(/^#?11/)) {
+      chord.diff[6] = sharpFlatToInt(m[0].charAt(0));
+      tension = tension.substring(m[0].length);
+    }
+    if (m = tension.match(/^b?13/)) {
+      chord.diff[7] = sharpFlatToInt(m[0].charAt(0));
+      tension = tension.substring(m[0].length);
+    }
+    return value;
+  }
+
+  function detectPhase5(chord, value) {
+    var m;
+    if (m = value.match(/^ ?omit ?(11|1|3|5|7|9)/)) {
+      chord.diff[(parseInt(m[1], 10) + 1) / 2 | 0] = null;
+      value = value.substring(m[0].length);
+    }
+    return value;
+  }
+
+  function detectPhase6(chord, value) {
+    // ' on ' とか ' / ' を削る
+    value = value.replace(/^ ?on ?|^ ?\/ ?/, '');
+    var m;
+    if (m = value.match(/^[A-G]#?/)) {
+      chord.diff[0] = keyToKeyIndex(m[0]) - chord.keyIndex;
+      value = value.substring(m[0].length);
+    }
+    return value;
+  }
+
+  function detectChordName(value) {
+    if (!value.match(/^[A-G]/)) {
+      // 論外な形式だったので最初から諦める
+      return [null, null, null, null, null, null, null, null];
+    }
+    var key = value.substring(0, hasSharp(value) ? 2 : 1); // 'A#' とか 'A' を取り出す
+    var chord = {
+      tri: 'M', // 'M' or 'm' or 'aug' or 'dim'
+      foundMaj: false,
+      keyIndex: keyToKeyIndex(key),
+      diff: [0, 0, 0, 0, null, null, null, null],
+    };
+    value = value.substring(key.length); // A# などを取り除く
+
+    // true にするとどのステップで壊れたのか追いやすい
+    var debugging = false;
+
+    // テキストで書いたのを分解していくのもアプローチとしてはあると思うけど
+    // 項目ごとに input とか select とかがあって、チェックつけたり選んだりすると
+    // 最終的にコードが組み立てられるような、GUI があっても良さそうに見える
+
+    // m, aug, dim, add2, add9, add4, madd2, madd9, madd4 の判定
+    value = detectPhase1(chord, value);
+    if (debugging) console.log('Phase1: ' + chord.diff.join(','));
+
+    // 7, 9, 11, 13, M7, M9, M11, M13, maj7, maj9, maj11, maj13, dim7, dim9, dim11, dim13, 6, 69 の判定
+    value = detectPhase2(chord, value);
+    if (debugging) console.log('Phase2: ' + chord.diff.join(','));
+
+    // sus4, -5
+    value = detectPhase3(chord, value);
+    if (debugging) console.log('Phase3: ' + chord.diff.join(','));
+
+    // 9, b9, #9, ……
+    value = detectPhase4(chord, value);
+    if (debugging) console.log('Phase4: ' + chord.diff.join(','));
+
+    // omit
+    value = detectPhase5(chord, value);
+    if (debugging) console.log('Phase5: ' + chord.diff.join(','));
+
+    // on
+    value = detectPhase6(chord, value);
+    if (debugging) console.log('Phase6: ' + chord.diff.join(','));
+
+    return chord;
+  }
+
+  function showResult(chord){
+    document.querySelector('#result').innerHTML = '(' + chord.diff.map(function(v, i){ return v === null ? '_' : v; }).join(',') + ')';
+    //        root 1   3   5   7   9   11  13
+    var base = [0, 12, 16, 19, 22, 26, 29, 33];
+    setActiveKeyboard(keys, chord.diff.map(function(v, i){ return v === null ? null : base[i] + v + chord.keyIndex; }));
+  }
+
+  // コード組み立て用フォーム周辺 /////////////////////////////////////////////////////////////////////
+
+  function initChordBuilder(frm) {
+    // ラジオボタンを入れる先
+    var elems = {
+      key: frm.querySelector('.chord-builder-key'),
+      basic1: frm.querySelector('.chord-builder-basic1'),
+      basic2: frm.querySelector('.chord-builder-basic2'),
+      basic3: frm.querySelector('.chord-builder-basic3'),
+      basic4: frm.querySelector('.chord-builder-basic4'),
+      tension1: frm.querySelector('.chord-builder-tension1'),
+      tension2: frm.querySelector('.chord-builder-tension2'),
+      tension3: frm.querySelector('.chord-builder-tension3'),
+      omit: frm.querySelector('.chord-builder-omit'),
+      bass: frm.querySelector('.chord-builder-bass'),
+    };
+    // ラジオボタンに入れる項目
+    var items = {
+      key: ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'],
+      basic1: [null, 'm', 'aug', 'dim', 'add9', 'add2', 'add4'],
+      basic2: [null, 'M'],
+      basic3: [null, '6', '7', '9', '11', '13'],
+      basic4: [null, 'sus4', '-5'],
+      tension1: [null, '9', 'b9', '#9'],
+      tension2: [null, '11', '#11'],
+      tension3: [null, '13', 'b13'],
+      omit: [null, 'omit1', 'omit3', 'omit5', 'omit7', 'omit9', 'omit11'],
+      bass: [null, 'C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'],
+    };
+    // ラジオボタンを追加
+    var keys = Object.keys(elems);
+    for (var i = 0; i < keys.length; ++i) {
+      var key = keys[i];
+      var elem = elems[key], item = items[key];
+      elem.innerHTML = "";
+      for (var j = 0; j < item.length; ++j) {
+        var label = document.createElement('label');
+        var input = document.createElement('input');
+        input.type = "radio";
+        input.name = key;
+        input.value = j;
+        input.checked = j == 0; // 最初の項目を予め選択
+        label.appendChild(input);
+        if (item[j] !== null) {
+          label.appendChild(document.createTextNode(item[j]));
+        }
+        elem.appendChild(label);
+      }
+    }
+    return {
+      err: frm.querySelector('.chord-builder-error-messages'),
+      elems: elems,
+      items: items,
+      form: frm
+    };
+  }
+
+  function setErrorMessageChordBuilder(chordBuilder, errors) {
+    var elems = chordBuilder.elems;
+    var keys = Object.keys(elems);
+    for (var i = 0; i < keys.length; ++i) {
+      elems[keys[i]].classList.remove('has-error');
+    }
+    var err = chordBuilder.err;
+    err.innerHTML = "";
+    for(var i = 0; i < errors.length; ++i) {
+      var li = document.createElement('li');
+      li.appendChild(document.createTextNode(errors[i].msg));
+      err.appendChild(li);
+      var places = errors[i].places;
+      for (var j = 0; j < places.length; ++j) {
+        elems[places[j]].classList.add('has-error');
+      }
+    }
+  }
+
+  function ChordError(msg, places) {
+    this.msg = msg;
+    this.places = places;
+  }
+
+  function validateChord(values) {
+    var errors = [];
+    // basic1～4 の禁止ルール ---------------------------------
+
+    // msus4 はダメ
+    if (values.basic1 == 1 && values.basic4 == 1) {
+      errors.push(new ChordError('"m" と "sus4" は同時に選べません', ['basic1', 'basic4']));
+    }
+    // Msus4 はダメ
+    if (values.basic2 == 1 && values.basic4 == 1) {
+      errors.push(new ChordError('"M" と "sus4" は同時に選べません', ['basic2', 'basic4']));
+    }
+
+    // aug-5 はダメ
+    if (values.basic1 == 2 && values.basic4 == 2) {
+      errors.push(new ChordError('"aug" と "-5" は同時に選べません', ['basic1', 'basic4']));
+    }
+
+    // omit の禁止ルール -------------------------------
+
+    // augomit5, dimomit5 はダメ
+    if ((values.basic1 == 2 || values.basic1 == 3) && values.omit == 3) {
+      errors.push(new ChordError('"aug" や "dim" と "omit5" は同時に選べません', ['basic1', 'omit']));
+    }
+
+    // -5omit5 はダメ
+    if (values.basic4 == 2 && values.omit == 3) {
+      errors.push(new ChordError('"-5" と "omit5" は同時に選べません', ['basic4', 'omit']));
+    }
+
+    // 9omit7, 11omit7, 13omit7 以外の omit7 はダメ
+    if (values.basic3 != 3 && values.basic3 != 4 && values.basic3 != 5 && values.omit == 4) {
+      errors.push(new ChordError('"omit7" を使うには "9", "11", "13" を選んでおく必要があります', ['basic3', 'omit']));
+    }
+
+    // 11omit9, 13omit9 以外の omit9 はダメ
+    if (values.basic3 != 4 && values.basic3 != 5 && values.omit == 5) {
+      errors.push(new ChordError('"omit9" を使うには "11", "13" を選んでおく必要があります', ['basic3', 'omit']));
+    }
+
+    // 13omit11 以外の omit11 はダメ
+    if (values.basic3 != 5 && values.omit == 6) {
+      errors.push(new ChordError('"omit11" を使うには "13" を選んでおく必要があります', ['basic3', 'omit']));
+    }
+
+    // bass の禁止ルール ---------------------------------
+
+    if (values.key == values.bass - 1) {
+      errors.push(new ChordError('「キー」と「ベース」で同じ音は選べません', ['key', 'bass']));
+    }
+
+    return errors;
+  }
+
+  function getValuesChordBuilder(chordBuilder) {
+    var frm = chordBuilder.form;
+    var values = {
+      key: parseInt(frm.key.value, 10),
+      basic1: parseInt(frm.basic1.value, 10),
+      basic2: parseInt(frm.basic2.value, 10),
+      basic3: parseInt(frm.basic3.value, 10),
+      basic4: parseInt(frm.basic4.value, 10),
+      tension1: parseInt(frm.tension1.value, 10),
+      tension2: parseInt(frm.tension2.value, 10),
+      tension3: parseInt(frm.tension3.value, 10),
+      omit: parseInt(frm.omit.value, 10),
+      bass: parseInt(frm.bass.value, 10),
+    };
+    return values;
+  }
+
+  function buildChord(chordBuilder, values) {
+    var items = chordBuilder.items;
+    var chord = [];
+    chord.push(items.key[values.key]);
+    chord.push(items.basic1[values.basic1]);
+    chord.push(items.basic2[values.basic2]);
+    chord.push(items.basic3[values.basic3]);
+    chord.push(items.basic4[values.basic4]);
+
+    var tension = [];
+    tension.push(items.tension1[values.tension1]);
+    tension.push(items.tension2[values.tension2]);
+    tension.push(items.tension3[values.tension3]);
+    tension = tension.filter(function(v){ return v !== null; });
+    if (tension.length > 0) {
+      chord.push('(' + tension.join(', ') + ')');
+    }
+
+    chord.push(items.omit[values.omit]);
+
+    var bass = items.bass[values.bass];
+    if (bass !== null) {
+      chord.push(' on ' + bass);
+    }
+
+    return chord.filter(function(v){ return v !== null; }).join('');
+  }
+
+  // キーボード周辺 ////////////////////////////////////////////////////////////////
+
+  function initKeyboard(kbd){
+    // keys に音の高さが低い順に div を入れる
+    var keys = [];
+    var whites = kbd.querySelectorAll('.white');
+    var blacks = kbd.querySelectorAll('.black');
+
+    // 白鍵の数を元にして鍵盤上での白鍵の幅を求める（小数点以下は切り捨て）
+    var whiteWidth = kbd.clientWidth / whites.length | 0;
+    // 白鍵の１オクターブ分のサイズを12分割して黒鍵の幅を求める
+    var octWidth = whiteWidth * 7;
+    var blackWidth = octWidth / 12;
+
+    for(var wi = 0, bi = 0, i = 0, k; wi < whites.length || bi < blacks.length; ++i) {
+      var oct = i / 12 | 0; // 現在何オクターブ目か
+      var key = i - oct * 12; // 下から数えていくつめのキーか
+      switch (key) {
+        case 0:  //C
+        case 2:  //D
+        case 4:  //E
+        case 5:  //F
+        case 7:  //G
+        case 9:  //A
+        case 11: //B
+          k = whites[wi];
+          k.style.width = whiteWidth + 'px';
+          k.style.left = (whiteWidth * wi) + 'px';
+          keys.push(k);
+          ++wi;
+          break;
+        case 1: //C#
+        case 3: //D#
+        case 6: //F#
+        case 8: //G#
+        case 10://A#
+          k = blacks[bi];
+          k.style.width = blackWidth + 'px';
+          k.style.left = (octWidth * oct + key * blackWidth) + 'px';
+          keys.push(k);
+          ++bi;
+          break;
+      }
+    }
+    return keys;
+  }
+
+  function setActiveKeyboard(keys, activeKeys) {
+    // 一旦全て戻して
+    for (var i = 0; i < keys.length; ++i) {
+      keys[i].classList.remove('active');
+    }
+    // 明るくしたいヤツだけを点灯
+    for (var i = 0; i < activeKeys.length; ++i) {
+      if (activeKeys[i] === null) continue;
+      keys[activeKeys[i]].classList.add('active');
+    }
+  }
+
+  // テスト系 //////////////////////////////////////////////////////////////////////////////////////
+
+  // Chrome を開いて Ctrl + Shift + J testBuil/der(); と打てば
+  // ラジオボタンの組み合わせでエラーにならない奴を全部列挙する
+  function testBuilder(){
+    var r = [];
+    var items = chordBuilder.items;
+    var values = {
+      key: 0,
+      basic1: 0,
+      basic2: 0,
+      basic3: 0,
+      basic4: 0,
+      tension1: 0,
+      tension2: 0,
+      tension3: 0,
+      omit: 0,
+      bass: 0,
+    };
+    var errors;
+    for (values.omit = 0; values.omit < items.omit.length; ++values.omit) {
+      for (values.tension3 = 0; values.tension3 < items.tension3.length; ++values.tension3) {
+        for (values.tension2 = 0; values.tension2 < items.tension2.length; ++values.tension2) {
+          for (values.tension1 = 0; values.tension1 < items.tension1.length; ++values.tension1) {
+            for (values.basic4 = 0; values.basic4 < items.basic4.length; ++values.basic4) {
+              for (values.basic3 = 0; values.basic3 < items.basic3.length; ++values.basic3) {
+                for (values.basic2 = 0; values.basic2 < items.basic2.length; ++values.basic2) {
+                  for (values.basic1 = 0; values.basic1 < items.basic1.length; ++values.basic1) {
+                    if (validateChord(values).length == 0) {
+                      r.push(buildChord(chordBuilder, values));
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    console.log('全 '+r.length+' パターン');
+    console.log(JSON.stringify(r).replace(/",/g, '",\n'));
+  }
+
+  // Chrome を開いて Ctrl + Shift + J でコンソールを出して testDetector(); と打てば
+  // 列挙されている項目についてテストが可能
+  function testDetector() {
+    var testData = [
+      {input: 'C',          want: [0,     0,     0,     0, null, null, null, null]},
+      {input: 'Cmaj',       want: [0,     0,     0,     0, null, null, null, null]},// test maj
+      {input: 'Cm',         want: [0,     0,    -1,     0, null, null, null, null]},
+      {input: 'Caug',       want: [0,     0,     0,     1, null, null, null, null]},
+      {input: 'Caug7',      want: [0,     0,     0,     1,    0, null, null, null]},
+      {input: 'Caug9',      want: [0,     0,     0,     1,    0,    0, null, null]},
+      {input: 'Cdim',       want: [0,     0,    -1,    -1, null, null, null, null]},
+      {input: 'Cadd2',      want: [0,     0,     0,     0, null,  -12, null, null]},
+      {input: 'Cadd9',      want: [0,     0,     0,     0, null,  -12, null, null]},
+      {input: 'Cadd4',      want: [0,     0,     0,     0, null, null,  -12, null]},
+      {input: 'C6',         want: [0,     0,     0,     0,   -1, null, null, null]},
+      {input: 'C7',         want: [0,     0,     0,     0,    0, null, null, null]},
+      {input: 'C9',         want: [0,     0,     0,     0,    0,    0, null, null]},
+      {input: 'C11',        want: [0,     0,     0,     0,    0,    0,    0, null]},
+      {input: 'C13',        want: [0,     0,     0,     0,    0,    0,    0,    0]},
+      {input: 'CM7',        want: [0,     0,     0,     0,    1,    0, null, null]},
+      {input: 'CM9',        want: [0,     0,     0,     0,    1,    0, null, null]},
+      {input: 'CM11',       want: [0,     0,     0,     0,    1,    0,    0, null]},
+      {input: 'CM13',       want: [0,     0,     0,     0,    1,    0,    0,    0]},
+      {input: 'Cmaj7',      want: [0,     0,     0,     0,    1,    0, null, null]},// test maj
+      {input: 'Cm6',        want: [0,     0,    -1,     0,   -1, null, null, null]},
+      {input: 'Cm7',        want: [0,     0,    -1,     0,    0, null, null, null]},
+      {input: 'Cm9',        want: [0,     0,    -1,     0,    0,    0, null, null]},
+      {input: 'CmM7',       want: [0,     0,    -1,     0,    1, null, null, null]},
+      {input: 'CmM9',       want: [0,     0,    -1,     0,    1,    0, null, null]},
+      {input: 'C69',        want: [0,     0,     0,     0,   -1,    0, null, null]},
+      {input: 'Cm69',       want: [0,     0,    -1,     0,   -1,    0, null, null]},
+      {input: 'Csus4',      want: [0,     0,     1,     0, null, null, null, null]},
+      {input: 'Cmadd9',     want: [0,     0,    -1,     0, null,  -12, null, null]},
+      {input: 'C7sus4',     want: [0,     0,     1,     0,    1, null, null, null]},
+      {input: 'C9sus4',     want: [0,     0,     1,     0,    1,    1, null, null]},
+      {input: 'C-5',        want: [0,     0,     0,    -1, null, null, null, null]},
+      {input: 'C7-5',       want: [0,     0,     0,    -5,    0, null, null, null]},
+      {input: 'C7(b9)',     want: [0,     0,     0,     0,    0,   -1, null, null]},
+      {input: 'C7(9)',      want: [0,     0,     0,     0,    0,    0, null, null]},
+      {input: 'C7(#9)',     want: [0,     0,     0,     0,    0,   +1, null, null]},
+      {input: 'C7(11)',     want: [0,     0,     0,     0,    0, null,    0, null]},
+      {input: 'C7(#11)',    want: [0,     0,     0,     0,    0, null,   +1, null]},
+      {input: 'C7(b13)',    want: [0,     0,     0,     0,    0, null, null,   -1]},
+      {input: 'C7(13)',     want: [0,     0,     0,     0,    0, null, null,    0]},
+      {input: 'C7(9,11)',   want: [0,     0,     0,     0,    0,    0,    0, null]},
+      {input: 'C7(9,13)',   want: [0,     0,     0,     0,    0,    0, null,    0]},
+      {input: 'C7(9,11,13)',want: [0,     0,     0,     0,    0,    0,    0,    0]},
+      {input: 'C13omit1',   want: [0,     0,     0,     0,    0,    0,    0,    0]},
+      {input: 'C13omit3',   want: [0,     0,     0,     0,    0,    0,    0,    0]},
+      {input: 'C13omit5',   want: [0,     0,     0,     0,    0,    0,    0,    0]},
+      {input: 'C13omit7',   want: [0,     0,     0,     0,    0,    0,    0,    0]},
+      {input: 'C13omit9',   want: [0,     0,     0,     0,    0,    0,    0,    0]},
+      {input: 'C13omit11',  want: [0,     0,     0,     0,    0,    0,    0,    0]},
+
+      //http://www.rittor-music.co.jp/app/shibanzukun/mychordbook.html
+      //これのコード入力の階層っぽいやつのがいいのかね。
+
+      // シャープのテスト
+      {input: 'C#',         want: [0, 0, 0, 0, null, null, null, null]},
+      {input: 'C#m',        want: [0, 0,-1, 0, null, null, null, null]},
+    ];
+
+
+    for (var i = 0; i < testData.length; ++i) {
+      // テストして、想定と違う結果を出したときはメッセージで報告
+      var want = testData[i].want.join(',');
+      var got = detectChordName(testData[i].input).join(',');
+      if (got !== want) {
+        console.log(testData[i].input + ' の出力が変だった！！　欲しかった答え: ' + want + '　得られた答え: ' + got);
+      } else {
+        console.log(testData[i].input + ' OK');
+      }
+    }
+  }
+</script>
+</html>
