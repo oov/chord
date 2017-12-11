@@ -88,11 +88,11 @@ function testDetector() {
     {input: 'C7(9,13)',   want: [0,    0,    0,    0,    0,    0, null,    0]},
     {input: 'C7(9,11,13)',want: [0,    0,    0,    0,    0,    0,    0,    0]},
     {input: 'C13omit1',   want: [0, null,    0,    0,    0,    0,    0,    0]},
-    {input: 'C13omit3',   want: [0,    0,    0,    0,    0,    0,    0,    0]},
-    {input: 'C13omit5',   want: [0,    0,    0,    0,    0,    0,    0,    0]},
-    {input: 'C13omit7',   want: [0,    0,    0,    0,    0,    0,    0,    0]},
-    {input: 'C13omit9',   want: [0,    0,    0,    0,    0,    0,    0,    0]},
-    {input: 'C13omit11',  want: [0,    0,    0,    0,    0,    0,    0,    0]},
+    {input: 'C13omit3',   want: [0,    0, null,    0,    0,    0,    0,    0]},
+    {input: 'C13omit5',   want: [0,    0,    0, null,    0,    0,    0,    0]},
+    {input: 'C13omit7',   want: [0,    0,    0,    0, null,    0,    0,    0]},
+    {input: 'C13omit9',   want: [0,    0,    0,    0,    0, null,    0,    0]},
+    {input: 'C13omit11',  want: [0,    0,    0,    0,    0,    0, null,    0]},
 
     //http://www.rittor-music.co.jp/app/shibanzukun/mychordbook.html
     //これのコード入力の階層っぽいやつのがいいのかね。
