@@ -106,23 +106,24 @@
 <script>
   // フォームのラジオボタンを触ったらコード組み立てるヤツ -------------
 
-  var chordBuilder = initChordBuilder(document.querySelector('form[name=builder]'));
-  var lastChordBuilderValues = JSON.stringify(getValuesChordBuilder(chordBuilder));
+  var chordBuilder = new ChordBuilder(document.querySelector('form[name=builder]'));
+  var lastChordBuilderValues = JSON.stringify(chordBuilder.getValues());
 
   setInterval(function(){
-    var values = getValuesChordBuilder(chordBuilder);
+    var values = chordBuilder.getValues();
     var valuesStr = JSON.stringify(values);
     if (lastChordBuilderValues != valuesStr) { // 選択項目が変更されていたら
       lastChordBuilderValues = valuesStr;
 
       // 入力された内容がコードとして問題ないかチェック
-      var errors = validateChord(values);
-      setErrorMessageChordBuilder(chordBuilder, errors);
+      var errors = chordBuilder.validate(values);
       if (errors.length) { // ダメだった
+        chordBuilder.setErrors(errors);
         return null;
       }
 
-      var chord = buildChord(chordBuilder, values); // コードを組み立て
+      chordBuilder.clearErrors();
+      var chord = chordBuilder.build(values); // コードを組み立て
       document.querySelector('input[type=text]').value = chord;
       showResult(detectChordName(chord));
     }
@@ -358,7 +359,7 @@
   // .cb-omit
   // .cb-bass
   // .cb-error-messages
-function initChordBuilder(frm) {
+  function ChordBuilder(frm) {
     // ラジオボタンに入れる項目
     var items = {
       key: ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'],
@@ -406,22 +407,30 @@ function initChordBuilder(frm) {
     if (!err) {
       throw new Error('エレメント ".cb-error-messages" が見つかりません');
     }
-    return {
-      err: err,
-      elems: elems,
-      items: items,
-      form: frm
-    };
+
+    this.err = err;
+    this.elems = elems;
+    this.items = items;
+    this.form = frm;
   }
 
-  function setErrorMessageChordBuilder(chordBuilder, errors) {
-    var elems = chordBuilder.elems;
+  // 画面に表示している全てのエラー情報を消す
+  ChordBuilder.prototype.clearErrors = function(errors) {
+    var elems = this.elems;
     var keys = Object.keys(elems);
     for (var i = 0; i < keys.length; ++i) {
       elems[keys[i]].classList.remove('has-error');
     }
-    var err = chordBuilder.err;
+    var err = this.err;
     err.innerHTML = "";
+  }
+
+  // 画面にエラー情報を表示する
+  // errors には ChordError のインスタンスの配列を渡す
+  ChordBuilder.prototype.setErrors = function(errors) {
+    this.clearErrors();
+    var elems = this.elems;
+    var err = this.err;
     for(var i = 0; i < errors.length; ++i) {
       var li = document.createElement('li');
       li.appendChild(document.createTextNode(errors[i].msg));
@@ -433,12 +442,18 @@ function initChordBuilder(frm) {
     }
   }
 
+  // ChordBuilder におけるエラー情報を表すインスタンス
+  // msg にはエラー内容、places にはエラー箇所を配列で渡す
+  // 例: new ChordError('「キー」と「ベース」で同じ音は選べません', ['key', 'bass'])
   function ChordError(msg, places) {
     this.msg = msg;
     this.places = places;
   }
 
-  function validateChord(values) {
+  // values の選択状態がコードとして正しいか調べ、
+  // 見つかったエラーを ChordError のインスタンスの配列で返す
+  // エラーがなかった場合は空の配列を返す
+  ChordBuilder.prototype.validate = function(values) {
     var errors = [];
     // basic1～4 の禁止ルール ---------------------------------
 
@@ -492,9 +507,10 @@ function initChordBuilder(frm) {
     return errors;
   }
 
-  function getValuesChordBuilder(chordBuilder) {
-    var frm = chordBuilder.form;
-    var values = {
+  // ChordBuilder のフォームで現在選択されている項目をまとめて返す
+  ChordBuilder.prototype.getValues = function() {
+    var frm = this.form;
+    return {
       key: parseInt(frm.key.value, 10),
       basic1: parseInt(frm.basic1.value, 10),
       basic2: parseInt(frm.basic2.value, 10),
@@ -506,11 +522,12 @@ function initChordBuilder(frm) {
       omit: parseInt(frm.omit.value, 10),
       bass: parseInt(frm.bass.value, 10),
     };
-    return values;
   }
 
-  function buildChord(chordBuilder, values) {
-    var items = chordBuilder.items;
+  // values に基いてコードを組み立てて返す
+  // ただしエラーがある values を渡した場合の動作は保証されない
+  ChordBuilder.prototype.build = function(values) {
+    var items = this.items;
     var chord = [];
     chord.push(items.key[values.key]);
     chord.push(items.basic1[values.basic1]);
@@ -565,8 +582,8 @@ function initChordBuilder(frm) {
               for (values.basic3 = 0; values.basic3 < items.basic3.length; ++values.basic3) {
                 for (values.basic2 = 0; values.basic2 < items.basic2.length; ++values.basic2) {
                   for (values.basic1 = 0; values.basic1 < items.basic1.length; ++values.basic1) {
-                    if (validateChord(values).length == 0) {
-                      r.push(buildChord(chordBuilder, values));
+                    if (chordBuilder.validate(values).length == 0) {
+                      r.push(chordBuilder.build(values));
                     }
                   }
                 }
