@@ -148,7 +148,11 @@
   }
 
   function keyToKeyIndex(key) {
-    return ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].indexOf(key);
+    if (hasSharp(key)) {
+      return ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].indexOf(key);
+    } else {
+      return ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'].indexOf(key);
+    }
   }
 
   function detectPhase1(chord, value) {
@@ -293,18 +297,21 @@
   }
 
   function detectChordName(value) {
-    if (!value.match(/^[A-G]/)) {
-      // 論外な形式だったので最初から諦める
-      return [null, null, null, null, null, null, null, null];
-    }
-    var key = value.substring(0, hasSharp(value) ? 2 : 1); // 'A#' とか 'A' を取り出す
     var chord = {
       tri: 'M', // 'M' or 'm' or 'aug' or 'dim'
       foundMaj: false,
-      keyIndex: keyToKeyIndex(key),
+      keyIndex: 0,
       diff: [0, 0, 0, 0, null, null, null, null],
     };
-    value = value.substring(key.length); // A# などを取り除く
+
+    var m;
+    if (m = value.match(/^[A-G][#b]?/)) {
+      chord.keyIndex = keyToKeyIndex(m[0]);
+      value = value.substring(m[0].length); // 用済みの部分を削る
+    } else {
+      // 論外な形式だった
+      return [null, null, null, null, null, null, null, null];
+    }
 
     // true にするとどのステップで壊れたのか追いやすい
     var debugging = true;
