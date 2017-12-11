@@ -110,7 +110,7 @@ function testDetector() {
     if (got !== want) {
       console.log(testData[i].input + ' の出力が変だった！！　欲しかった答え: ' + want + '　得られた答え: ' + got);
     } else {
-      console.log(testData[i].input + ' OK');
+      console.log(testData[i].input + ' OK ' + got);
     }
   }
 }
