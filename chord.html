@@ -225,12 +225,16 @@
     }
 
     if (chord.tri == 'M' || chord.tri == 'm') {
-      if (m = value.match(/^add[29]/)) {
-        chord.diff[5] = -12
-        value = value.substring(m[0].length);
-      }
-      if (m = value.match(/^add4/)) {
-        chord.diff[6] = -12
+      if (m = value.match(/^add([249])/)) {
+        switch (m[1]) {
+          case '2':
+          case '9':
+            chord.diff[5] = -12;
+            break;
+          case '4':
+            chord.diff[6] = -12;
+            break;
+        }
         value = value.substring(m[0].length);
       }
     }
