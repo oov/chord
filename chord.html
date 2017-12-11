@@ -219,6 +219,9 @@
     }
 
     if (m = value.match(/^(maj|Maj|M)/)) {
+      // TODO: 今は 'M' にしてるけど、既に 'm' だったときは 'mM' にするのが正しい？
+      // 問答無用で上書きしてしまう振る舞いに問題があるような気がする
+      // あと、今の処理方法だと augmaj なども成り立っちゃって微妙そう
       chord.tri = 'M';
       chord.foundMaj = true;
       value = value.substring(m[0].length); // 用済みの部分を削る
