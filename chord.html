@@ -33,7 +33,6 @@
   .keyboard{
     height: 64px;
     position: relative;
-    width: 500px;
   }
   .white{
     box-sizing: border-box;
@@ -42,6 +41,7 @@
     height: 100%;
     top: 0;
     position: absolute;
+    z-index: 0;
   }
   .black{
     box-sizing: border-box;
@@ -51,6 +51,7 @@
     position: absolute;
     height: 60%;
     top: 0;
+    z-index: 1;
   }
   .white.active{
     background-color: #f99;
@@ -62,57 +63,7 @@
   }
 </style>
 
-<div class="keyboard">
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-    <div class="white"></div>
-
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-    <div class="black"></div>
-</div>
+<div class="keyboard"></div>
 
 <p>
   <input type="text" onchange="showResult(detectChordName(this.value))"><span id="result">(_,_,_,_,_,_,_,_)</span>
@@ -177,7 +128,7 @@
   }, 100);
 
   // キーボードの準備
-  var keys = initKeyboard(document.querySelector('.keyboard'));
+  var keys = initKeyboard(document.querySelector('.keyboard'), 4, 500, 64);
 
   function hasSharp(str) {
     return str.substring(1, 2) == '#'; // 2文字目が # か？
@@ -573,22 +524,18 @@
 
   // キーボード周辺 ////////////////////////////////////////////////////////////////
 
-  function initKeyboard(kbd){
+  function initKeyboard(elem, octave, width){
     // keys に音の高さが低い順に div を入れる
     var keys = [];
-    var whites = kbd.querySelectorAll('.white');
-    var blacks = kbd.querySelectorAll('.black');
 
     // 白鍵の数を元にして鍵盤上での白鍵の幅を求める（小数点以下は切り捨て）
-    var whiteWidth = kbd.clientWidth / whites.length | 0;
+    var whiteWidth = width / (octave * 7) | 0;
     // 白鍵の１オクターブ分のサイズを12分割して黒鍵の幅を求める
-    var octWidth = whiteWidth * 7;
-    var blackWidth = octWidth / 12;
+    var blackWidth = whiteWidth * 7 / 12;
 
-    for(var wi = 0, bi = 0, i = 0, k; wi < whites.length || bi < blacks.length; ++i) {
-      var oct = i / 12 | 0; // 現在何オクターブ目か
-      var key = i - oct * 12; // 下から数えていくつめのキーか
-      switch (key) {
+    for(var wi = 0, i = 0; i < octave * 12; ++i) {
+      var k = document.createElement('div');
+      switch (i % 12) {
         case 0:  //C
         case 2:  //D
         case 4:  //E
@@ -596,10 +543,9 @@
         case 7:  //G
         case 9:  //A
         case 11: //B
-          k = whites[wi];
+          k.className = 'white';
           k.style.width = whiteWidth + 'px';
           k.style.left = (whiteWidth * wi) + 'px';
-          keys.push(k);
           ++wi;
           break;
         case 1: //C#
@@ -607,13 +553,13 @@
         case 6: //F#
         case 8: //G#
         case 10://A#
-          k = blacks[bi];
-          k.style.width = blackWidth + 'px';
-          k.style.left = (octWidth * oct + key * blackWidth) + 'px';
-          keys.push(k);
-          ++bi;
+          k.className = 'black';
+          k.style.width = (blackWidth | 0) + 'px';
+          k.style.left = (i * blackWidth | 0) + 'px';
           break;
       }
+      elem.appendChild(k);
+      keys.push(k);
     }
     return keys;
   }
