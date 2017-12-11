@@ -12,20 +12,8 @@
 // .cb-bass
 // .cb-error-messages
 function ChordBuilder(frm) {
-  // ラジオボタンに入れる項目
-  var items = {
-    key: ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'],
-    basic1: [null, 'm', 'aug', 'dim', 'add9', 'add2', 'add4'],
-    basic2: [null, 'M'],
-    basic3: [null, '6', '7', '9', '11', '13'],
-    basic4: [null, 'sus4', '-5'],
-    tension1: [null, '9', 'b9', '#9'],
-    tension2: [null, '11', '#11'],
-    tension3: [null, '13', 'b13'],
-    omit: [null, 'omit1', 'omit3', 'omit5', 'omit7', 'omit9', 'omit11'],
-    bass: [null, 'C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'],
-  };
   var elems = {}; // ラジオボタンを入れる先
+  var items = this.items; // ラジオボタンに入れる項目
 
   // ラジオボタンを追加
   var keys = Object.keys(items);
@@ -62,7 +50,6 @@ function ChordBuilder(frm) {
 
   this.err = err;
   this.elems = elems;
-  this.items = items;
   this.form = frm;
 }
 
@@ -101,6 +88,20 @@ function ChordError(msg, places) {
   this.msg = msg;
   this.places = places;
 }
+
+// ラジオボタンに入れる項目
+ChordBuilder.prototype.items = {
+  key: ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'],
+  basic1: [null, 'm', 'aug', 'dim', 'add9', 'add2', 'add4'],
+  basic2: [null, 'M'],
+  basic3: [null, '6', '7', '9', '11', '13'],
+  basic4: [null, 'sus4', '-5'],
+  tension1: [null, '9', 'b9', '#9'],
+  tension2: [null, '11', '#11'],
+  tension3: [null, '13', 'b13'],
+  omit: [null, 'omit1', 'omit3', 'omit5', 'omit7', 'omit9', 'omit11'],
+  bass: [null, 'C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'],
+};
 
 // values の選択状態がコードとして正しいか調べ、
 // 見つかったエラーを ChordError のインスタンスの配列で返す
