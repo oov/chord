@@ -345,20 +345,20 @@
 
   // コード組み立て用フォーム周辺 /////////////////////////////////////////////////////////////////////
 
-  function initChordBuilder(frm) {
-    // ラジオボタンを入れる先
-    var elems = {
-      key: frm.querySelector('.chord-builder-key'),
-      basic1: frm.querySelector('.chord-builder-basic1'),
-      basic2: frm.querySelector('.chord-builder-basic2'),
-      basic3: frm.querySelector('.chord-builder-basic3'),
-      basic4: frm.querySelector('.chord-builder-basic4'),
-      tension1: frm.querySelector('.chord-builder-tension1'),
-      tension2: frm.querySelector('.chord-builder-tension2'),
-      tension3: frm.querySelector('.chord-builder-tension3'),
-      omit: frm.querySelector('.chord-builder-omit'),
-      bass: frm.querySelector('.chord-builder-bass'),
-    };
+  // コード組み立て用フォームを準備し、それを操作するためのインスタンスを返す
+  // frm には form タグのエレメントを渡す必要があり、そのタグの中には以下のクラス名を持つタグが必要
+  // .chord-builder-key
+  // .chord-builder-basic1
+  // .chord-builder-basic2
+  // .chord-builder-basic3
+  // .chord-builder-basic4
+  // .chord-builder-tension1
+  // .chord-builder-tension2
+  // .chord-builder-tension3
+  // .chord-builder-omit
+  // .chord-builder-bass
+  // .chord-builder-error-messages
+function initChordBuilder(frm) {
     // ラジオボタンに入れる項目
     var items = {
       key: ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'],
@@ -372,11 +372,18 @@
       omit: [null, 'omit1', 'omit3', 'omit5', 'omit7', 'omit9', 'omit11'],
       bass: [null, 'C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'],
     };
+    var elems = {}; // ラジオボタンを入れる先
+
     // ラジオボタンを追加
-    var keys = Object.keys(elems);
+    var keys = Object.keys(items);
     for (var i = 0; i < keys.length; ++i) {
       var key = keys[i];
-      var elem = elems[key], item = items[key];
+      var item = items[key];
+      var elem = frm.querySelector('.chord-builder-' + key);
+      if (!elem) {
+        throw new Error('エレメント ".chord-builder-' + key + '" が見つかりません');
+      }
+      elems[key] = elem;
       elem.innerHTML = "";
       for (var j = 0; j < item.length; ++j) {
         var label = document.createElement('label');
