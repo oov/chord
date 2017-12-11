@@ -108,52 +108,53 @@ ChordBuilder.prototype.items = {
 // エラーがなかった場合は空の配列を返す
 ChordBuilder.prototype.validate = function(values) {
   var errors = [];
+  var v = values;
   // basic1～4 の禁止ルール ---------------------------------
 
   // msus4 はダメ
-  if (values.basic1 == 1 && values.basic4 == 1) {
+  if (v.basic1 == 1 && v.basic4 == 1) {
     errors.push(new ChordError('"m" と "sus4" は同時に選べません', ['basic1', 'basic4']));
   }
   // Msus4 はダメ
-  if (values.basic2 == 1 && values.basic4 == 1) {
+  if (v.basic2 == 1 && v.basic4 == 1) {
     errors.push(new ChordError('"M" と "sus4" は同時に選べません', ['basic2', 'basic4']));
   }
 
   // aug-5 はダメ
-  if (values.basic1 == 2 && values.basic4 == 2) {
+  if (v.basic1 == 2 && v.basic4 == 2) {
     errors.push(new ChordError('"aug" と "-5" は同時に選べません', ['basic1', 'basic4']));
   }
 
   // omit の禁止ルール -------------------------------
 
   // augomit5, dimomit5 はダメ
-  if ((values.basic1 == 2 || values.basic1 == 3) && values.omit == 3) {
+  if ((v.basic1 == 2 || v.basic1 == 3) && v.omit == 3) {
     errors.push(new ChordError('"aug" や "dim" と "omit5" は同時に選べません', ['basic1', 'omit']));
   }
 
   // -5omit5 はダメ
-  if (values.basic4 == 2 && values.omit == 3) {
+  if (v.basic4 == 2 && v.omit == 3) {
     errors.push(new ChordError('"-5" と "omit5" は同時に選べません', ['basic4', 'omit']));
   }
 
   // 9omit7, 11omit7, 13omit7 以外の omit7 はダメ
-  if (values.basic3 != 3 && values.basic3 != 4 && values.basic3 != 5 && values.omit == 4) {
+  if (v.basic3 != 3 && v.basic3 != 4 && v.basic3 != 5 && v.omit == 4) {
     errors.push(new ChordError('"omit7" を使うには "9", "11", "13" を選んでおく必要があります', ['basic3', 'omit']));
   }
 
   // 11omit9, 13omit9 以外の omit9 はダメ
-  if (values.basic3 != 4 && values.basic3 != 5 && values.omit == 5) {
+  if (v.basic3 != 4 && v.basic3 != 5 && v.omit == 5) {
     errors.push(new ChordError('"omit9" を使うには "11", "13" を選んでおく必要があります', ['basic3', 'omit']));
   }
 
   // 13omit11 以外の omit11 はダメ
-  if (values.basic3 != 5 && values.omit == 6) {
+  if (v.basic3 != 5 && v.omit == 6) {
     errors.push(new ChordError('"omit11" を使うには "13" を選んでおく必要があります', ['basic3', 'omit']));
   }
 
   // bass の禁止ルール ---------------------------------
 
-  if (values.key == values.bass - 1) {
+  if (v.key == v.bass - 1) {
     errors.push(new ChordError('「キー」と「ベース」で同じ音は選べません', ['key', 'bass']));
   }
 
