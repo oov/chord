@@ -216,17 +216,16 @@
       value = value.substring(m[0].length); // 用済みの部分を削る
     } else {
       chord.tri = 'M';
-      if (m = value.match(/^(maj|Maj|M)/)) {
-        chord.foundMaj = true;
-        value = value.substring(m[0].length); // 用済みの部分を削る
-      }
+    }
+
+    if (m = value.match(/^(maj|Maj|M)/)) {
+      chord.tri = 'M';
+      chord.foundMaj = true;
+      value = value.substring(m[0].length); // 用済みの部分を削る
     }
 
     if (chord.tri == 'M' || chord.tri == 'm') {
-      if (m = value.match(/^add[249]/)) {
-        switch (m[0]) {
-          
-        }
+      if (m = value.match(/^add[29]/)) {
         chord.diff[5] = -12
         value = value.substring(m[0].length);
       }
@@ -246,7 +245,7 @@
       } else {
         chord.diff[4] = 0;
       }
-      var n = parseInt(m[2], 10);
+      var n = parseInt(m[1], 10);
       if (n >= 9) {
         chord.diff[5] = 0;
       }
@@ -290,7 +289,7 @@
       return value;
     }
     // value からカッコを削っておく
-    value = a.substring(0, m.index) + a.substring(m.index + m[0].length);
+    value = value.substring(0, m.index) + value.substring(m.index + m[0].length);
 
     var tension = m[0];
     tension = tension.substring(1); // '(' を削る
@@ -345,7 +344,7 @@
     value = value.substring(key.length); // A# などを取り除く
 
     // true にするとどのステップで壊れたのか追いやすい
-    var debugging = false;
+    var debugging = true;
 
     // テキストで書いたのを分解していくのもアプローチとしてはあると思うけど
     // 項目ごとに input とか select とかがあって、チェックつけたり選んだりすると
@@ -353,27 +352,27 @@
 
     // m, aug, dim, add2, add9, add4, madd2, madd9, madd4 の判定
     value = detectPhase1(chord, value);
-    if (debugging) console.log('Phase1: ' + chord.diff.join(','));
+    if (debugging) console.log('Phase1: ' + chord.diff.join(',') + '  value: \'' + value + '\'');
 
     // 7, 9, 11, 13, M7, M9, M11, M13, maj7, maj9, maj11, maj13, dim7, dim9, dim11, dim13, 6, 69 の判定
     value = detectPhase2(chord, value);
-    if (debugging) console.log('Phase2: ' + chord.diff.join(','));
+    if (debugging) console.log('Phase2: ' + chord.diff.join(',') + '  value: \'' + value + '\'');
 
     // sus4, -5
     value = detectPhase3(chord, value);
-    if (debugging) console.log('Phase3: ' + chord.diff.join(','));
+    if (debugging) console.log('Phase3: ' + chord.diff.join(',') + '  value: \'' + value + '\'');
 
     // 9, b9, #9, ……
     value = detectPhase4(chord, value);
-    if (debugging) console.log('Phase4: ' + chord.diff.join(','));
+    if (debugging) console.log('Phase4: ' + chord.diff.join(',') + '  value: \'' + value + '\'');
 
     // omit
     value = detectPhase5(chord, value);
-    if (debugging) console.log('Phase5: ' + chord.diff.join(','));
+    if (debugging) console.log('Phase5: ' + chord.diff.join(',') + '  value: \'' + value + '\'');
 
     // on
     value = detectPhase6(chord, value);
-    if (debugging) console.log('Phase6: ' + chord.diff.join(','));
+    if (debugging) console.log('Phase6: ' + chord.diff.join(',') + '  value: \'' + value + '\'');
 
     return chord;
   }
