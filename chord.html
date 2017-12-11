@@ -204,17 +204,15 @@
   }
 
   function detectPhase2(chord, value) {
-    // TODO: C69が動かなくなってる
-    // 初期のコードでは C69 のときは 9 をテンションとして処理されていたが、
-    // 今はカッコの中身を切り離してから処理してるので動かない
     var m;
-    if (m = value.match(/^(7|9|11|13)/)) {
-      if (chord.tri == 'dim') {
+    // C69 などを扱うために 7|9|11|13 とは別に処理する必要がある
+    if (m = value.match(/^(6)?(7|9|11|13)?/)) {
+      var n = parseInt(m[2], 10);
+      if (m[1] === '6' || (chord.tri == 'dim' && n >= 7)) {
         chord.diff[4] = -1;
-      } else {
+      } else if (n >= 7 && chord.diff[4] === null) {
         chord.diff[4] = 0;
       }
-      var n = parseInt(m[1], 10);
       if (n >= 9) {
         chord.diff[5] = 0;
       }
@@ -224,11 +222,6 @@
       if (n >= 13) {
         chord.diff[7] = 0;
       }
-      value = value.substring(m[0].length);
-    }
-
-    if (m = value.match(/^6/)) {
-      chord.diff[4] = -1;
       value = value.substring(m[0].length);
     }
 
