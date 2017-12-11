@@ -399,8 +399,13 @@ function initChordBuilder(frm) {
         elem.appendChild(label);
       }
     }
+
+    var err = frm.querySelector('.cb-error-messages');
+    if (!err) {
+      throw new Error('エレメント ".cb-error-messages" が見つかりません');
+    }
     return {
-      err: frm.querySelector('.cb-error-messages'),
+      err: err,
       elems: elems,
       items: items,
       form: frm
