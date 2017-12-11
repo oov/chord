@@ -307,10 +307,6 @@
     // true にするとどのステップで壊れたのか追いやすい
     var debugging = true;
 
-    // テキストで書いたのを分解していくのもアプローチとしてはあると思うけど
-    // 項目ごとに input とか select とかがあって、チェックつけたり選んだりすると
-    // 最終的にコードが組み立てられるような、GUI があっても良さそうに見える
-
     // m, aug, dim, add2, add9, add4, madd2, madd9, madd4 の判定
     value = detectPhase1(chord, value);
     if (debugging) console.log('Phase1: ' + chord.diff.join(',') + '  value: \'' + value + '\'');
