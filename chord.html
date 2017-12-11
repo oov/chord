@@ -200,6 +200,9 @@
   }
 
   function detectPhase2(chord, value) {
+    // TODO: C69が動かなくなってる
+    // 初期のコードでは C69 のときは 9 をテンションとして処理されていたが、
+    // 今はカッコの中身を切り離してから処理してるので動かない
     var m;
     if (m = value.match(/^(7|9|11|13)/)) {
       if (chord.tri == 'dim') {
