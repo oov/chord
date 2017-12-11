@@ -284,11 +284,9 @@
   }
 
   function detectPhase6(chord, value) {
-    // ' on ' とか ' / ' を削る
-    value = value.replace(/^ ?on ?|^ ?\/ ?/, '');
     var m;
-    if (m = value.match(/^[A-G]#?/)) {
-      chord.diff[0] = keyToKeyIndex(m[0]) - chord.keyIndex;
+    if (m = value.match(/^(?: ?(?:on|\/) ?)([A-G]#?)/)) {
+      chord.diff[0] = keyToKeyIndex(m[1]) - chord.keyIndex;
       value = value.substring(m[0].length);
     }
     return value;
