@@ -105,7 +105,7 @@ function testDetector() {
   for (var i = 0; i < testData.length; ++i) {
     // テストして、想定と違う結果を出したときはメッセージで報告
     var want = testData[i].want.join(',');
-    var got = detectChordName(testData[i].input).join(',');
+    var got = detectChordName(testData[i].input).diff.join(',');
     if (got !== want) {
       console.log(testData[i].input + ' の出力が変だった！！　欲しかった答え: ' + want + '　得られた答え: ' + got);
     } else {
