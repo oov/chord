@@ -3,30 +3,30 @@
 <meta charset="utf-8">
 <title>コードをJavascriptで翻訳するやつ</title>
 <style>
-  th {
-    background-color: #eee;
-  }
-  td {
-    vertical-align: top;
-  }
-  td label {
-    display: block;
-  }
-
   /* コード組み立てフォーム ------------------- */
 
-.cb-key.has-error,
-.cb-basic1.has-error,
-.cb-basic2.has-error,
-.cb-basic3.has-error,
-.cb-basic4.has-error,
-.cb-tension1.has-error,
-.cb-tension2.has-error,
-.cb-tension3.has-error,
-.cb-omit.has-error,
-.cb-bass.has-error {
-  background-color: #fdd;
-}
+  form[name=builder] th {
+    background-color: #eee;
+  }
+  form[name=builder] td {
+    vertical-align: top;
+  }
+  form[name=builder] td ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  form[name=builder] .cb-key.has-error,
+  form[name=builder] .cb-basic1.has-error,
+  form[name=builder] .cb-basic2.has-error,
+  form[name=builder] .cb-basic3.has-error,
+  form[name=builder] .cb-basic4.has-error,
+  form[name=builder] .cb-tension1.has-error,
+  form[name=builder] .cb-tension2.has-error,
+  form[name=builder] .cb-tension3.has-error,
+  form[name=builder] .cb-omit.has-error,
+  form[name=builder] .cb-bass.has-error {
+    background-color: #fdd;
+  }
 
   /* キーボード ------------------------------ */
 
@@ -87,16 +87,16 @@
   </thead>
   <tbody>
     <tr>
-      <td class="cb-key"></td>
-      <td class="cb-basic1"></td>
-      <td class="cb-basic2"></td>
-      <td class="cb-basic3"></td>
-      <td class="cb-basic4"></td>
-      <td class="cb-tension1"></td>
-      <td class="cb-tension2"></td>
-      <td class="cb-tension3"></td>
-      <td class="cb-omit"></td>
-      <td class="cb-bass"></td>
+      <td><ul class="cb-key"></ul></td>
+      <td><ul class="cb-basic1"></ul></td>
+      <td><ul class="cb-basic2"></ul></td>
+      <td><ul class="cb-basic3"></ul></td>
+      <td><ul class="cb-basic4"></ul></td>
+      <td><ul class="cb-tension1"></ul></td>
+      <td><ul class="cb-tension2"></ul></td>
+      <td><ul class="cb-tension3"></ul></td>
+      <td><ul class="cb-omit"></ul></td>
+      <td><ul class="cb-bass"></ul></td>
     </tr>
   </tbody>  
 </table>
@@ -346,7 +346,7 @@
   // コード組み立て用フォーム周辺 /////////////////////////////////////////////////////////////////////
 
   // コード組み立て用フォームを準備し、それを操作するためのインスタンスを返す
-  // frm には form タグのエレメントを渡す必要があり、そのタグの中には以下のクラス名を持つタグが必要
+  // frm には form タグのエレメントを渡す必要があり、そのタグの中には以下のクラス名を持つ ul/ol タグが必要
   // .cb-key
   // .cb-basic1
   // .cb-basic2
@@ -386,6 +386,7 @@ function initChordBuilder(frm) {
       elems[key] = elem;
       elem.innerHTML = "";
       for (var j = 0; j < item.length; ++j) {
+        var li = document.createElement('li');
         var label = document.createElement('label');
         var input = document.createElement('input');
         input.type = "radio";
@@ -396,7 +397,8 @@ function initChordBuilder(frm) {
         if (item[j] !== null) {
           label.appendChild(document.createTextNode(item[j]));
         }
-        elem.appendChild(label);
+        li.appendChild(label);
+        elem.appendChild(li);
       }
     }
 
