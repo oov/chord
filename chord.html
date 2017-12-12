@@ -104,6 +104,7 @@
 </form>
 <script src="keyboard.js"></script>
 <script src="chord-builder.js"></script>
+<script src="chord-player.js"></script>
 <script src="test.js"></script>
 <script>
   // フォームのラジオボタンを触ったらコード組み立てるヤツ -------------
@@ -133,6 +134,22 @@
 
   // キーボードの準備
   var keyboard = new Keyboard(document.querySelector('.keyboard'), 4, 500, 64);
+  // 和音再生機能の準備
+  var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  var chordPlayer = new ChordPlayer(audioCtx);
+  var stopTimer = null;
+
+  function play(notes) {
+    if (stopTimer) {
+      clearTimeout(stopTimer);
+      stopTimer = null;
+    }
+    chordPlayer.play(notes);
+    stopTimer = setTimeout(function(){
+      chordPlayer.stop();
+      stopTimer = null;
+    }, 1000);
+  }
 
   function hasSharp(str) {
     return str.substring(1, 2) == '#'; // 2文字目が # か？
@@ -342,7 +359,9 @@
     document.querySelector('#result').innerHTML = '(' + chord.diff.map(function(v, i){ return v === null ? '_' : v; }).join(',') + ')';
     //        root 1   3   5   7   9   11  13
     var base = [0, 12, 16, 19, 22, 26, 29, 33];
-    keyboard.setActive(chord.diff.map(function(v, i){ return v === null ? null : base[i] + v + chord.keyIndex; }));
+    var notes = chord.diff.map(function(v, i){ return v === null ? null : base[i] + v + chord.keyIndex; }).filter(function(v){ return v !== null; });
+    keyboard.setActive(notes);
+    play(notes);
   }
 </script>
 </html>
