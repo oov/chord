@@ -91,7 +91,7 @@ function ChordError(msg, places) {
 
 // ラジオボタンに入れる項目
 ChordBuilder.prototype.items = {
-  key: ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'],
+  key: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
   basic1: [null, 'm', 'aug', 'dim', 'add9', 'add2', 'add4'],
   basic2: [null, 'M'],
   basic3: [null, '6', '7', '9', '11', '13'],
@@ -100,7 +100,7 @@ ChordBuilder.prototype.items = {
   tension2: [null, '11', '#11'],
   tension3: [null, '13', 'b13'],
   omit: [null, 'omit1', 'omit3', 'omit5', 'omit7', 'omit9', 'omit11'],
-  bass: [null, 'C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'],
+  bass: [null, 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
 };
 
 // values の選択状態がコードとして正しいか調べ、
