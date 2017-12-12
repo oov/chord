@@ -285,6 +285,8 @@
     if (m = value.match(/^\s*(?:on|\/)\s*([A-G]#?)/)) {
       chord.diff[0] = keyToKeyIndex(m[1]) - chord.keyIndex;
       value = value.substring(m[0].length);
+    } else {
+      chord.diff[0] = null;
     }
     return value;
   }
